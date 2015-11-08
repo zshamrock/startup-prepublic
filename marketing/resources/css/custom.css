@@ -1,0 +1,11 @@
+body {
+    padding-top: 20px;
+    padding-bottom: 20px;
+    padding-left: 20px;
+}
+
+p.message {
+    width: 100%;
+    max-width: 200px;
+}
+
