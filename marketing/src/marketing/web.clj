@@ -8,10 +8,15 @@
 
 (defroutes main-routes
   (GET "/" [] (response/resource-response "index.html"))
+  
   (POST "/" {body :body} 
         (async/go (async/>! store/store-chan (:email body)))
         (response/response ""))
+  
+  (POST "/flush" (async/go store/flush))
+
   (route/resources "/" {:root ""})
+
   (route/not-found (response/resource-response "404.html")))
 
 (def app 

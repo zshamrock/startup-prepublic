@@ -8,7 +8,8 @@
                  [compojure "1.4.0"]
                  [ring/ring-core "1.4.0"]
                  [ring/ring-jetty-adapter "1.4.0"]
-                 [ring/ring-json "0.4.0"]]
+                 [ring/ring-json "0.4.0"]
+                 [clj-jgit "0.8.8"]]
   :main ^:skip-aot marketing.main
   :target-path "target/%s"
   :plugins [[lein-ring "0.8.11"]]

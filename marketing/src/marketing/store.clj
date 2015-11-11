@@ -1,13 +1,18 @@
 (ns marketing.store
   (:require [clojure.java.io :as io]
-            [clojure.core.async :as async])
+            [clojure.core.async :as async]
+            [marketing.env :as env]
+            [clj-jgit.porcelain :refer :all])
   (:import (java.util.concurrent TimeUnit)))
 
+(defonce repo (let [path (env/get "HOME") ".marketing"] 
+                (if (.exists (io/file path))
+                  (load-repo path)
+                  (git-clone-full (env/repo) path))))
 
+; verify that reopening the file keeps the old content
 (defonce emails 
-  (let [path (or 
-               (System/getenv "MARKETING_STORE") 
-               "/var/vautoservice/emails.txt")]
+  (let [path (env/store)]
     (io/writer path)))
 
 (def open? (atom true))
@@ -29,7 +34,6 @@
 
 (defn- store-email [email]
   (locking emails
-    (println "Ready to store" email)
     (doto emails
       (.write email)
       .newLine)))
@@ -42,3 +46,10 @@
   (println "All go workers are started."))
 
 (start-go 5)
+
+(defn flush []
+  (println "Flushing data")
+  (locking emails
+    ()  
+    )
+  )
