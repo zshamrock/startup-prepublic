@@ -5,10 +5,11 @@
             [clj-jgit.porcelain :refer :all])
   (:import (java.util.concurrent TimeUnit)))
 
-(defonce repo (let [path (env/get "HOME") ".marketing"] 
-                (if (.exists (io/file path))
-                  (load-repo path)
-                  (git-clone-full (env/repo) path))))
+(defonce local-repo-path (str (env/get "HOME") java.io.File/separator ".marketing"))
+
+(defonce repo (if (.exists (io/file local-repo-path))
+                  (load-repo local-repo-path)
+                  (git-clone-full (env/repo) local-repo-path)))
 
 ; verify that reopening the file keeps the old content
 (defonce emails 
@@ -47,9 +48,18 @@
 
 (start-go 5)
 
+; will it overwrite the existing content?
 (defn flush []
   (println "Flushing data")
   (locking emails
-    ()  
-    )
-  )
+    (.flush emails)
+    (with-open [emails (io/reader (env/store))]
+      (let [unique-emails (-> (line-seq emails)
+                              distinct
+                              sort
+                              )]
+        (spit (str local-repo-path java.io.File/separator "emails.txt") (clojure.string/join "\n" unique-emails))
+        (println (type repo))
+        (git-add repo "emails.txt")
+        (git-commit repo (str "Added " (count unique-emails) " collected emails."))
+        (git-push repo)))))

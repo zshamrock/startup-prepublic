@@ -13,7 +13,9 @@
         (async/go (async/>! store/store-chan (:email body)))
         (response/response ""))
   
-  (POST "/flush" (async/go store/flush))
+  (POST "/flush" [] 
+        (async/go (store/flush))
+        (response/response ""))
 
   (route/resources "/" {:root ""})
 

@@ -3,12 +3,13 @@
   (:require [ring.adapter.jetty :as jetty]
             [marketing.web :as web]
             [marketing.env :as env]
+            [marketing.store :as store]
             [clojure.java.io :as io]))
 
 (defn -main [& args] 
   (if (or 
-        (.exists (io/file (util/env "HOME" ".marketing")))
-        (util/env "MARKETING_REPO"))
+        (.exists (io/file store/local-repo-path))
+        (env/repo))
     (let [port (env/port) 
           host (env/host)] 
       (jetty/run-jetty web/app {:port port, :host host})))
