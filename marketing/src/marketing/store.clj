@@ -59,9 +59,9 @@
             (do 
               (git-store emails-to-store)
               ; clean up flushed emails from memory-emails
-              (swap! memory-emails #(apply disj % new-emails))
               (log/info "Data is flushed"))
-            (log/info "Nothing to flush, no new unique emails")))))
+            (log/info "Nothing to flush, no new unique emails"))
+          (swap! memory-emails #(apply disj % new-emails)))))
     (log/info "Nothing to flush, memory emails is empty")))
 
 (defn- register-shutdown-hook []

@@ -3,15 +3,22 @@
   (:require [clojure.tools.logging :as log]
             [clojure.string :as string]))
 
+(def ^:private all-env-vars [{:name ::PORT :default 5000 :int? true}
+                             {:name ::HOST :default "localhost"}
+                             {:name ::REPO_URL}
+                             {:name ::WEB_FLUSH_COMMAND :default "flush"}
+                             {:name ::FLUSH_INTERVAL_MINS :default 10 :int? true}])
+
 (def ^:private env-var-prefix "MARKETING_")
 
 (defn env-var-name [env-var-kw]
-  (str env-var-prefix (name env-var)))
+  (str env-var-prefix (name env-var-kw)))
 
 (defn get
   ([kw] (get kw nil))
   ([kw default]
-   (or (System/getenv (env-var-name kw)) default)))
+   (let [add-prefix? (some #{kw} (map :name all-env-vars))]
+     (or (System/getenv (if add-prefix? (env-var-name kw) kw)) default))))
 
 (defn get-int [kw default]
   (let [v (get kw default)]
@@ -30,36 +37,16 @@
                                            (string/replace \_ \-)
                                            (symbol))]]
     (intern *ns* defn-name (fn [] 
-                             (if env-var-int? get-int get) env-var-kw env-var-default))
+                             ((if env-var-int? get-int get) env-var-kw env-var-default)))
     (intern *ns* (with-meta def-name {:defn defn-name}) env-var-kw)))
 
-
-(comment (defmacro defenv [vars]
-  (cons `apply
-        (for [env-var vars :let [env-var-name (name (:name env-var))
-                                 env-var-default (:default env-var)
-                                 env-var-int? (:int? env-var)]]
-          (conj []
-            `(def ~(symbol env-var-name) ~(:name env-var))
-            `(defn ~(-> env-var-name 
-                        (string/lower-case)
-                        (string/replace \_ \-)
-                        symbol
-                        ) [] 
-               (~(symbol (str "marketing.env/get" (if env-var-int? "-int" ""))) ~(:name env-var) ~env-var-default)))))))
-
-(def ^:private all-env-vars [{:name ::PORT :default 5000 :int? true}
-                             {:name ::HOST :default "localhost"}
-                             {:name ::REPO_URL}
-                             {:name ::WEB_FLUSH_COMMAND}
-                             {:name ::FLUSH_INTERVAL_MINS :default 10 :int? true}])
 
 (def defenv-all (delay (defenv all-env-vars)))
 
 (force defenv-all)
 
 ; all this complexity due to be able to print all env vars, without code duplications
-; it works, if there is a better way to do it, would be nice to compare (at least try with simple (resolve) instead (ns-resolve))
+; it works, next time when there is a need to modify this code, might revisit and come with a better implementation
 (defn log-all []
   (doseq [env-var all-env-vars :let [env-var-kw (:name env-var)
                                      ns-sym (symbol (namespace env-var-kw))
