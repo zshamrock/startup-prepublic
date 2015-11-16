@@ -1,89 +1,117 @@
 (ns marketing.store
+  (:refer-clojure :exclude [flush])
   (:require [clojure.java.io :as io]
             [clojure.core.async :as async]
             [marketing.env :as env]
+            [clojure.tools.logging :as log]
             [clj-jgit.porcelain :refer :all])
   (:import [java.util.concurrent TimeUnit]
            [java.time LocalDateTime]
-           [java.time.temporal ChronoUnit]))
+           [java.time.temporal ChronoUnit]
+           [java.io File]))
 
-(defonce local-repo-path (str (env/get "HOME") java.io.File/separator ".marketing"))
+; http://stuartsierra.com/2015/05/27/clojure-uncaught-exceptions
+(Thread/setDefaultUncaughtExceptionHandler
+ (reify Thread$UncaughtExceptionHandler
+   (uncaughtException [_ thread ex]
+     (log/error ex "Uncaught exception on" (.getName thread)))))
 
-(defonce repo (if (.exists (io/file local-repo-path))
-                  (load-repo local-repo-path)
-                  (git-clone-full (env/repo) local-repo-path)))
+(def local-repo-path (str (env/get "HOME") File/separator ".marketing"))
 
-; verify that reopening the file keeps the old content
-(defonce emails 
-  (let [path (env/store)]
-    (io/writer path)))
+(def store-file (str local-repo-path (File/separator) "emails.txt"))
+
+(def repo (delay (if (.exists (io/file local-repo-path))
+                   (load-repo local-repo-path)
+                   (:repo (git-clone-full (env/repo-url) local-repo-path)))))
+
+(def store-chan (async/chan 100))
+
+(def ^{:doc "In-memory emails storage for collecting 'working' emails until they are flushed into the persistence Git-based storage"} 
+  memory-emails (atom #{}))
 
 (def running? (atom true))
 
-(defn- register-shutdown-hook []
-  (.addShutdownHook (Runtime/getRuntime)  
-    (Thread. #(do (
-                   (print "Closing emails store...")
-                   (reset! running? false)
-                   (locking emails
-                     ; call store/flush
-                     (doto emails
-                       .flush
-                       .close)))
-                  (println "emails store is closed!")))))
+(defn- git-store [emails]
+  (locking store-file
+    (force repo)
+    (spit store-file (clojure.string/join "\n" emails))
+    (git-add @repo "emails.txt")
+    (git-commit @repo (str "Store " (count emails) " collected emails."))
+    (let [push-cmd (.push @repo)]
+      (-> push-cmd
+          (.setDryRun true)
+          (.call)))))
 
-(register-shutdown-hook)
+(defn flush []
+  ; only flush if there is something to flush
+  (log/info "Flushing data")
+  (if (seq @memory-emails)
+    (locking store-file
+      (when @running?
+        (let [stored-emails (if (or (realized? repo) (.exists (io/file store-file))) 
+                              (clojure.string/split (slurp store-file) #"\n")
+                              [])
+              new-emails @memory-emails
+              emails-to-store (-> (concat stored-emails new-emails)
+                                  distinct
+                                  sort)]
+          (if-not (= (count emails-to-store) (count stored-emails))
+            (do 
+              (git-store emails-to-store)
+              ; clean up flushed emails from memory-emails
+              (swap! memory-emails #(apply disj % new-emails))
+              (log/info "Data is flushed"))
+            (log/info "Nothing to flush, no new unique emails")))))
+    (log/info "Nothing to flush, memory emails is empty")))
+
+(defn- register-shutdown-hook []
+  (log/info "Register shutdown hook")
+  (.addShutdownHook (Runtime/getRuntime)  
+                    (Thread. #(do 
+                                (log/info "Shutdown...")
+                                ; waiting for any currently running store call to finish
+                                (locking store-file
+                                  (flush)
+                                  (reset! running? false))))))
 
 (defn- start-flush-scheduler []
-  (async/thread 
-    (loop [flushed-at (LocalDateTime/now)]
+  (async/thread
+    (log/info "Flush scheduler started")
+    (loop [last-flushed-at (LocalDateTime/now)]
       (when @running?
-        (let [elapsed-mins-from-last-flush (.between ChronoUnit/MINUTES (LocalDateTime/now) flushed-at)
-              sleep-mins (max 0 (- (env/flush-interval-mins) elapsed-mins-from-last-flush))]
+        (let [now (LocalDateTime/now)
+              elapsed-mins-since-last-flush (.between ChronoUnit/MINUTES last-flushed-at now)
+              sleep-mins (max 0 (- (env/flush-interval-mins) elapsed-mins-since-last-flush))]
+          (log/debug "Elapsed time since last flush" elapsed-mins-since-last-flush "mins")
+          (log/debug "Sleeping for" sleep-mins "minutes")
           (.sleep TimeUnit/MINUTES sleep-mins)
           (recur
             (if (zero? sleep-mins)
               (do
                 (flush)
-                (LocalDateTime/now)))
-            flushed-at))))))
+                (LocalDateTime/now))
+              last-flushed-at)))))))
 
-(start-flush-scheduler)
 
-(defonce store-chan (async/chan 100))
-
-(defn- store-email [email]
-  (locking emails
-    (doto emails
-      (.write email)
-      .newLine)))
-
-(defn- start-go [num]
+(defn- start-go-workers [num]
   (dotimes [_ num]
     (async/go (while @running?
                 (let [email (async/<! store-chan)] 
-                  (store-email email)))))
-  (println "All go workers are started."))
+                  (swap! memory-emails conj email)))))
+  (log/info "All go workers are started"))
 
-(start-go 5)
+(defn- repo-defined? []
+  (or (.exists (io/file local-repo-path))
+      (env/repo-url)))
 
-; will it overwrite the existing content?
-; protect flush from being called multiple only once per configured interval?
-(defn flush []
-  (println "Flushing data")
-  (locking emails
-    (.flush emails)
-    (with-open [emails (io/reader (env/store))]
-      (let [emails-path (str local-repo-path java.io.File/separator "emails.txt")
-            unique-emails (-> (concat (line-seq emails) (clojure.string/split (slurp emails-path) #"\n"))
-                              distinct
-                              sort)]
-        (spit (clojure.string/join "\n" unique-emails))
-        (println (type repo))
-        ; do add, commit and push only if there is a difference between what there is currently in file and the new content
-        (git-add repo "emails.txt")
-        (git-commit repo (str "Added " (count unique-emails) " collected emails."))
-        (let [push-cmd (.push repo)]
-          (-> push-cmd
-            (.setDryRun true)
-            (.call)))))))
+(def ^{:doc "Call this function to initialize all necessary routines for store operate correctly. Will terminate if no repository is defined."}
+  init 
+  (delay
+    (when-not (repo-defined?)
+      (binding [*out* *err*]
+        (log/error "Repository URL where to store the data is required. Please set" (env/env-var-name env/REPO_URL) "environment variable")
+        (System/exit 1)))
+    (env/log-all) 
+    (register-shutdown-hook)
+    (start-flush-scheduler)
+    (start-go-workers 5)))
