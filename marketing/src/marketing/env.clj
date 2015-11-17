@@ -3,7 +3,7 @@
   (:require [clojure.tools.logging :as log]
             [clojure.string :as string]))
 
-(def ^:private all-env-vars [{:name ::PORT :default 5000 :int? true}
+(def ^:private all-env-vars [{:name ::PORT :default 3000 :int? true}
                              {:name ::HOST :default "localhost"}
                              {:name ::REPO_URL}
                              {:name ::WEB_FLUSH_COMMAND :default "flush"}
