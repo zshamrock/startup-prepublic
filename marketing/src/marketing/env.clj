@@ -7,7 +7,8 @@
                              {:name ::HOST :default "localhost"}
                              {:name ::REPO_URL}
                              {:name ::WEB_FLUSH_COMMAND :default "flush"}
-                             {:name ::FLUSH_INTERVAL_MINS :default 10 :int? true}])
+                             {:name ::FLUSH_INTERVAL_MINS :default 10 :int? true}
+                             {:name ::FLUSH_THRESHOLD :default 10000 :int? true}])
 
 (def ^:private env-var-prefix "MARKETING_")
 
@@ -41,7 +42,7 @@
     (intern *ns* (with-meta def-name {:defn defn-name}) env-var-kw)))
 
 
-(def defenv-all (delay (defenv all-env-vars)))
+(def ^:private defenv-all (delay (defenv all-env-vars)))
 
 (force defenv-all)
 

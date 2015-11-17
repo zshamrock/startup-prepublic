@@ -16,11 +16,11 @@
    (uncaughtException [_ thread ex]
      (log/error ex "Uncaught exception on" (.getName thread)))))
 
-(def local-repo-path (str (env/get "HOME") File/separator ".marketing"))
+(def ^:private local-repo-path (str (env/get "HOME") File/separator ".marketing"))
 
-(def store-file (str local-repo-path (File/separator) "emails.txt"))
+(def ^:private store-file (str local-repo-path (File/separator) "emails.txt"))
 
-(def repo (delay (if (.exists (io/file local-repo-path))
+(def ^:private repo (delay (if (.exists (io/file local-repo-path))
                    (load-repo local-repo-path)
                    (:repo (git-clone-full (env/repo-url) local-repo-path)))))
 
@@ -29,7 +29,9 @@
 (def ^{:doc "In-memory emails storage for collecting 'working' emails until they are flushed into the persistence Git-based storage"} 
   memory-emails (atom #{}))
 
-(def running? (atom true))
+(def ^:private running? (atom true))
+
+(def ^:private flush-running? (atom false))
 
 (defn- git-store [emails]
   (locking store-file
@@ -42,27 +44,35 @@
           (.setDryRun true)
           (.call)))))
 
-(defn flush []
-  ; only flush if there is something to flush
-  (log/info "Flushing data")
-  (if (seq @memory-emails)
-    (locking store-file
-      (when @running?
-        (let [stored-emails (if (or (realized? repo) (.exists (io/file store-file))) 
-                              (clojure.string/split (slurp store-file) #"\n")
-                              [])
-              new-emails @memory-emails
-              emails-to-store (-> (concat stored-emails new-emails)
-                                  distinct
-                                  sort)]
-          (if-not (= (count emails-to-store) (count stored-emails))
-            (do 
-              (git-store emails-to-store)
+(defn flush 
+  "Flush in-memory emails into file and git store them,
+  reason is just an arbitrary keyword to describe the reason of the flush,
+  available values so far are: :web, :scheduler, :shutdown, :threshold."
+  [reason]
+  (when-not @flush-running?
+    (log/info "Flushing data" reason)
+    ; only flush if there is something to flush
+    (if (seq @memory-emails)
+      (locking store-file
+        (when @running?
+          (try
+            (reset! flush-running? true)
+            (let [stored-emails (if (or (realized? repo) (.exists (io/file store-file))) 
+                                  (clojure.string/split (slurp store-file) #"\n")
+                                  [])
+                  new-emails @memory-emails
+                  emails-to-store (-> (concat stored-emails new-emails)
+                                      distinct
+                                      sort)]
+              (if-not (= (count emails-to-store) (count stored-emails))
+                (do 
+                  (git-store emails-to-store)
+                  (log/info "Data is flushed"))
+                (log/info "Nothing to flush, no new unique emails"))
               ; clean up flushed emails from memory-emails
-              (log/info "Data is flushed"))
-            (log/info "Nothing to flush, no new unique emails"))
-          (swap! memory-emails #(apply disj % new-emails)))))
-    (log/info "Nothing to flush, memory emails is empty")))
+              (swap! memory-emails #(apply disj % new-emails)))
+            (finally (reset! flush-running? false)))))
+      (log/info "Nothing to flush, memory emails is empty"))))
 
 (defn- register-shutdown-hook []
   (log/info "Register shutdown hook")
@@ -71,7 +81,7 @@
                                 (log/info "Shutdown...")
                                 ; waiting for any currently running store call to finish
                                 (locking store-file
-                                  (flush)
+                                  (flush :shutdown)
                                   (reset! running? false))))))
 
 (defn- start-flush-scheduler []
@@ -82,13 +92,13 @@
         (let [now (LocalDateTime/now)
               elapsed-mins-since-last-flush (.between ChronoUnit/MINUTES last-flushed-at now)
               sleep-mins (max 0 (- (env/flush-interval-mins) elapsed-mins-since-last-flush))]
-          (log/debug "Elapsed time since last flush" elapsed-mins-since-last-flush "mins")
-          (log/debug "Sleeping for" sleep-mins "minutes")
+          (log/trace "Elapsed time since last flush" elapsed-mins-since-last-flush "mins")
+          (log/trace "Sleeping for" sleep-mins "minutes")
           (.sleep TimeUnit/MINUTES sleep-mins)
           (recur
             (if (zero? sleep-mins)
               (do
-                (flush)
+                (flush :scheduler)
                 (LocalDateTime/now))
               last-flushed-at)))))))
 
@@ -115,3 +125,10 @@
     (register-shutdown-hook)
     (start-flush-scheduler)
     (start-go-workers 5)))
+
+(defn- flush-on-threshold [key _ _ emails]
+  (when (>= (count emails) (env/flush-threshold))
+    (log/debug "Threshold is reached, flushing")
+    (async/go (flush :threshold))))
+
+(add-watch memory-emails ::threshold flush-on-threshold)
