@@ -9,27 +9,37 @@
             [marketing.env :as env]
             [marketing.store :as store]))
 
+(def ^:private response-codes {:bad-request 400
+                               :forbidden 403})
+
 (defroutes main-routes
   (GET "/" [] (response/resource-response "web/index.html"))
 
   (POST "/" {body :body} 
-        (let [email (:email body) ok-response (response/response "")]
+        (let [email (:email body) 
+              ok-response (response/response "")]
           (if (validate/possibly-email? email)
             (do
               (async/go (async/>! store/store-chan (clojure.string/trim email)))
               ok-response)
-            (response/status ok-response 400))))
+            (response/status ok-response (:bad-request response-codes)))))
+
+  (let [web-flush-command (env/web-flush-command)
+        web-flush-command-enabled? (not (zero? (env/web-flush-command-enabled)))
+        ok-response (response/response "")]
+    (when web-flush-command-enabled?
+      (log/info "Web flush command is available through" (str "/" web-flush-command)))
+
+    (POST (str "/" web-flush-command) [] 
+          (if web-flush-command-enabled?
+            (do
+              (async/go (store/flush :web))
+              (response/response ""))
+            (response/status ok-response (:forbidden response-codes)))))
 
   (route/resources "/" {:root "/web"})
 
-  (route/not-found (response/resource-response "web/404.html"))
-
-  (let [web-flush-command (env/web-flush-command)]
-    (when (seq web-flush-command)
-      (log/info "Web flush command is available through" (str "/" web-flush-command))
-      (POST (str "/" web-flush-command) [] 
-            (async/go (store/flush :web))
-            (response/response "")))))
+  (route/not-found (response/resource-response "web/404.html")))
 
 (def app 
   (do

@@ -35,14 +35,13 @@
 
 (defn- git-store [emails]
   (locking store-file
-    (force repo)
     (spit store-file (clojure.string/join "\n" emails))
     (git-add @repo "emails.txt")
-    (git-commit @repo (str "Store " (count emails) " collected emails."))
-    (let [push-cmd (.push @repo)]
-      (-> push-cmd
-          (.setDryRun true)
-          (.call)))))
+    (git-commit @repo (str "Store " (count emails) " collected emails.") {:name "Marketing Bot" :email ""})
+    (let [push-cmd (.push @repo)
+          dry-run? (not (zero? (env/flush-dry-run)))]
+      (when dry-run? (.setDryRun push-cmd true))
+      (.call push-cmd))))
 
 (defn flush 
   "Flush in-memory emails into file and git store them,
@@ -57,7 +56,8 @@
         (when @running?
           (try
             (reset! flush-running? true)
-            (let [stored-emails (if (or (realized? repo) (.exists (io/file store-file))) 
+            (force repo)
+            (let [stored-emails (if (.exists (io/file store-file)) 
                                   (clojure.string/split (slurp store-file) #"\n")
                                   [])
                   new-emails @memory-emails
