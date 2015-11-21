@@ -1,6 +1,6 @@
 (defproject marketing "1.0.0"
   :description "Collect potential users emails"
-  :url "http://vautoservice.by"
+  :url ""
   :license {:name "Eclipse Public License"
             :url "http://www.eclipse.org/legal/epl-v10.html"}
   :dependencies [[org.clojure/clojure "1.7.0"]
