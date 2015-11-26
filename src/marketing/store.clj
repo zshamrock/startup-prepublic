@@ -40,8 +40,8 @@
     (git-commit @repo (str "Store " (count emails) " collected emails.") {:name "Marketing Bot" :email ""})
     (let [push-cmd (.push @repo)
           dry-run? (not (zero? (env/flush-dry-run)))]
-      (when dry-run? (.setDryRun push-cmd true))
-      (.call push-cmd))))
+      (when-not dry-run? 
+        (.call push-cmd)))))
 
 (defn flush 
   "Flush in-memory emails into file and git store them,
