@@ -1,0 +1,9 @@
+web:
+  image: akazlou/startup-prepublic:deps
+  command: ring server-headless    
+  ports:
+    - 80:3000
+  volumes:
+    - ~/.marketing:/root/.marketing
+  environment:
+    MARKETING_REPO_URL: "${MARKETING_REPO_URL}"
