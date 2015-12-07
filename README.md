@@ -8,6 +8,10 @@ A few advantages or key features:
 - Git repository can be integrated with Slack or Hipchat to receive notifications every time the user signs up
 - Use Github or Bitbucket as the data storage, so no need to take care of data replication and data loss yourself
 
+### Architecture (pen and paper)
+
+![Architecture](architecture.jpg)
+
 ### Available environment variables
 <table>
     <tr>
