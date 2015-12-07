@@ -1,14 +1,18 @@
 ### About
+
 Experiment using Git as a data store to collect users emails for startups 
 during product development when not yet public beta is available. 
 
 For serious data driven backend this approach is not suitable, but for small set of data it should work fine.
 
 A few advantages or key features:
+
 - Git repository can be integrated with Slack or Hipchat to receive notifications every time the user signs up
+
 - Use Github or Bitbucket as the data storage, so no need to take care of data replication and data loss yourself
 
 ### How to use
+
 - Provide static HTML page inside `resources/web` (by default HTML5 Boilerplate is there)
 - Implement a form submitting `POST /` of `application/json` `Content-Type` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
 or any way you like:
@@ -32,6 +36,7 @@ or any way you like:
 ![Architecture](architecture.jpg)
 
 ### Available environment variables
+
 <table>
     <tr>
         <th>Name (default value)</th>
@@ -81,6 +86,7 @@ or any way you like:
 </table>
 
 ### Deployment
+
 Here below the instruction how to deploy into DigitalOcean with help of `docker-machine`. It should be easy (again due to various cloud drivers supported by docker machine) to apply the same steps for any cloud provider.
 
 1. Get DigitalOcean access token from https://cloud.digitalocean.com/settings/applications
@@ -102,7 +108,9 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 *Some steps could be automated, lets say with Ansible, for now I don't feel like it is necessary to do.*
 
 ### Development
+
 - During development it makes sense to enable `MARKETING_FLUSH_DRY_RUN`
+
 - Start the application with `lein run` or `lein ring server-headless` and `lein repl` to explore the app
 
 ### License
