@@ -8,25 +8,24 @@ A few advantages or key features:
 - Git repository can be integrated with Slack or Hipchat to receive notifications every time the user signs up
 - Use Github or Bitbucket as the data storage, so no need to take care of data replication and data loss yourself
 
-### How it works
+### How to use
 - Provide static HTML page inside `resources/web` (by default HTML5 Boilerplate is there)
 - Implement a form submitting `POST /` `application/json` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
 or any way you like:
-    
 
-    (function() {
-        $("button").click(function() {
-            $.ajax("/", {
-                contentType: "application/json",
-                data: JSON.stringify({email: $("#email").val()}),
-                method: "POST"
+        
+        (function() {
+            $("button").click(function() {
+                $.ajax("/", {
+                    contentType: "application/json",
+                    data: JSON.stringify({email: $("#email").val()}),
+                    method: "POST"
+                });
+                // thanks user
+                $("#marketing").html("<div>Thank you very much!</div>");
             });
-            // thanks user
-            $("#marketing").html("<div>Thank you very much!</div>");
-        });
-    })();
-
-
+        })();
+        
 
 ### Architecture (pen and paper)
 
