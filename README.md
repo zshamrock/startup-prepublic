@@ -57,7 +57,7 @@ A few advantages or key features:
     <tr>
         <td>MARKETING_FLUSH_DRY_RUN (0)</td>
         <td>Whether push the changes into remote repository or skip this part and just commit locally. Good for testing and developing locally. </td>
-        <td>1 | 0. 1 - to enable dry run, so no push will be performed. REPO_URL still must be valid as it will do clone first.</td>
+        <td>1 | 0. 1 - to enable dry run, so no push will be performed. MARKETING_REPO_URL still must be valid as it will do clone first.</td>
     </tr>
 </table>
 
