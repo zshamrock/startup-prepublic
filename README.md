@@ -10,7 +10,7 @@ A few advantages or key features:
 
 ### How to use
 - Provide static HTML page inside `resources/web` (by default HTML5 Boilerplate is there)
-- Implement a form submitting `POST /` `application/json` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
+- Implement a form submitting `POST /` of `application/json` `Content-Type` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
 or any way you like:
 
         
