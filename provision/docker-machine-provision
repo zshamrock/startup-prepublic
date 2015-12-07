@@ -1,3 +1,1 @@
-docker-machine create --driver digitalocean --digitalocean-access-token $1 --digitalocean-image "debian-8-x64" --digitalocean-region "ams3" --digitalocean-size "512mb" marketing
-
-
+docker-machine create --driver digitalocean --digitalocean-access-token $1 --digitalocean-image "debian-8-x64" --digitalocean-region "ams3" --digitalocean-size "512mb" vautoservice
