@@ -58,7 +58,18 @@ A few advantages or key features:
 </table>
 
 ### Deployment
-Docker part is finalized now. Details are coming soon. Check Dockerfile, docker-compose.yml and provision/ directory for now.
+Here below the instruction how to deploy into DigitalOcean with help of `docker-machine`. It should be easy (again due to various cloud drivers supported by docker machine) to apply the same steps for any cloud provider.
+
+1. Get DigitalOcean access token from https://cloud.digitalocean.com/settings/applications
+2. Run `provision/docker-machine-provision <your digitalocean access token>` - it will create droplet with Debian 8.2 x64 image with 512mb of RAM, in AMS3 datacenter, named `marketing` (feel free to modify `docker-machine-provision` to meet your needs)
+3. Modify your docker env by running `eval "$(docker-machine env marketing)"`, it will export `DOCKER_HOST` and `DOCKER_CERT_PATH` among others which make your `docker` and `docker-compose` commands to operate on DigitalOcean image instead of local host
+4. Run `export MARKETING_REPO_URL=<your git repository SSH url> && docker-compose -d up`, to build and start container inside DigitalOcean in detached mode (`-d` flag) (`MARKETING_REPO_URL` is the only required parameter for the application to start, so it will fail if it is not provided)
+5. Final step, as the application in order to clone, as well as push into your repository SSH key must configured, to do so:
+    5.1. Ssh to your cloud image with `docker-machine ssh marketing`
+    5.2. Run `ssh-keygen` (docker container has a volume mapping between `/root/.ssh`)
+    5.3. Add generated public key as additional SSH key into your Git repository to allow access using generate private key
+
+*Some steps could be automated, lets say with Ansible, for now I don't feel like it is necessary to do.*
 
 ### License
 The MIT License (MIT)
