@@ -8,6 +8,24 @@ A few advantages or key features:
 - Git repository can be integrated with Slack or Hipchat to receive notifications every time the user signs up
 - Use Github or Bitbucket as the data storage, so no need to take care of data replication and data loss yourself
 
+### How it works
+- Provide static HTML page inside `resources/web` (by default HTML5 Boilerplate is there)
+- Implement a form submitting `POST /` `application/json` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
+or any way you like:
+    
+    (function() {
+        $("button").click(function() {
+            $.ajax("/", {
+                contentType: "application/json",
+                data: JSON.stringify({email: $("#email").val()}),
+                method: "POST"
+            });
+            // thanks user
+            $("#marketing").html("<div>Thank you very much!</div>");
+        });
+    })();
+
+
 ### Architecture (pen and paper)
 
 ![Architecture](architecture.jpg)
@@ -31,7 +49,7 @@ A few advantages or key features:
     </tr>
     <tr>
         <td>MARKETING_REPO_URL</td>
-        <td>*Required*. Repository URL to be used to store emails.txt. Will clone the repository, and push changes there.</td>
+        <td>*Required* (unless `~/.marketing` exists, which then allows to skip this variable). Repository URL to be used to store emails.txt. Will clone the repository, and push changes there.</td>
         <td>Existing URL on Github or Bitbucket using SSH protocol.</td>
     </tr>
     <tr>
@@ -81,6 +99,10 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
     5.3. Add generated public key as an additional SSH key into your Git repository to allow access using generate private key
 
 *Some steps could be automated, lets say with Ansible, for now I don't feel like it is necessary to do.*
+
+### Development
+- During development it makes sense to enable `MARKETING_FLUSH_DRY_RUN`
+- Start the application with `lein run` or `lein ring server-headless` and `lein repl` to explore the app
 
 ### License
 The MIT License (MIT)
