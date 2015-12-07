@@ -67,7 +67,9 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 5. Final step, as the application in order to clone, as well as push into your repository, SSH key must configured, to do so:
 
     5.1. Ssh to your cloud image with `docker-machine ssh marketing`
+    
     5.2. Run `ssh-keygen` (docker container has a volume mapping between `/root/.ssh`)
+
     5.3. Add generated public key as additional SSH key into your Git repository to allow access using generate private key
 
 *Some steps could be automated, lets say with Ansible, for now I don't feel like it is necessary to do.*
