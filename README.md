@@ -13,6 +13,7 @@ A few advantages or key features:
 - Implement a form submitting `POST /` `application/json` with the following content: `{"email": "user entered email"}`, like in the following snippet below, 
 or any way you like:
     
+
     (function() {
         $("button").click(function() {
             $.ajax("/", {
@@ -24,6 +25,7 @@ or any way you like:
             $("#marketing").html("<div>Thank you very much!</div>");
         });
     })();
+
 
 
 ### Architecture (pen and paper)
