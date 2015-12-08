@@ -1,4 +1,6 @@
-### About [![Build Status](https://travis-ci.org/zshamrock/startup-prepublic.svg?branch=master)](https://travis-ci.org/zshamrock/startup-prepublic)
+## startup-prepublic [![Build Status](https://travis-ci.org/zshamrock/startup-prepublic.svg?branch=master)](https://travis-ci.org/zshamrock/startup-prepublic)
+
+### About
 
 Experiment using Git as a data store to collect users emails for startups 
 during product development when not yet public beta is available. 
