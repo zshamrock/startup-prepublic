@@ -113,6 +113,14 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 
 - Start the application with `lein run` or `lein ring server-headless` and `lein repl` to explore the app
 
+- Or using Docker:
+
+    - `docker build -t akazlou/startup-prepublic .` 
+
+    - `docker run -it --name prepublic -p 3000:3000 -v $(pwd):/app --env MARKETING_REPO_URL=<your git repository SSH url> akazlou/startup-prepublic` (additionally can provide `MARKETING_FLUSH_DRY_RUN=1` as well)
+
+    - and then you can reuse the same container with `docker stop/start prepublic`
+
 ### License
 The MIT License (MIT)
 
