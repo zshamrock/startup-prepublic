@@ -2,7 +2,7 @@
 
 ### About
 
-![Slack notification](screenshots/slack-notification.jpg)
+![Slack notification](screenshots/slack-notification.png)
 
 Experiment using Git as a data store to collect users emails for startups 
 during product development when not yet public beta is available. 
