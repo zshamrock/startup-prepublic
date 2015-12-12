@@ -33,11 +33,12 @@
 
 (def ^:private flush-running? (atom false))
 
-(defn- git-store [emails]
+(defn- git-store [emails reason]
   (locking store-file
     (spit store-file (clojure.string/join "\n" emails))
     (git-add @repo "emails.txt")
-    (git-commit @repo (str "Store " (count emails) " collected emails.") {:name "Marketing Bot" :email ""})
+    (let [msg (str "Store " (count emails) " collected emails (" reason ").")]
+      (git-commit @repo msg {:name "Marketing Bot" :email ""}))
     (let [push-cmd (.push @repo)
           dry-run? (not (zero? (env/flush-dry-run)))]
       (when-not dry-run? 
@@ -66,7 +67,7 @@
                                       sort)]
               (if-not (= (count emails-to-store) (count stored-emails))
                 (do 
-                  (git-store emails-to-store)
+                  (git-store emails-to-store reason)
                   (log/info "Data is flushed"))
                 (log/info "Nothing to flush, no new unique emails"))
               ; clean up flushed emails from memory-emails
