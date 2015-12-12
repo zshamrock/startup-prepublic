@@ -133,7 +133,7 @@ There is a bare minimum automation testing.
 
 Best way here is to do system testing, by running JMeter script `marketing.jmx` and verify the number of records in the resulting file is equal to the total number of concurrent requests done by JMeter (100 threads, 1000 times, so should expect 100 * 1000 = 100 000 entries in the emails.txt file). 
 
-**Note**: it is recommended that you enable `MARKETING_FLUSH_DRY_RUN` environment variable to see the commits only, but not directly pushed into the repo, so the best way to run the application for JMeter testing is the following:
+**Note**: it is recommended that you enable `MARKETING_FLUSH_DRY_RUN` environment variable to see the commits only, but not directly push into the repo, so the best way to run the application for JMeter testing is the following:
 
 - `export MARKETING_FLUSH_DRY_RUN=1 MARKETING_FLUSH_INTERVAL_MINS=1 MARKETING_FLUSH_THRESHOLD=500 && lein run` (considering you have an empty `git init` `~/.marketing` directory)
 
