@@ -113,6 +113,8 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 
 *Some steps could be automated, lets say with Ansible, for now I don't feel like it is necessary to do.*
 
+To apply changes to the running docker container use `docker-compose` (after enabling docker environment variables `eval "$(docker-machine env marketing)"`. Most of the time `docker-compose up -d` is the command you need to run.
+
 ### Development
 
 - During development it makes sense to enable `MARKETING_FLUSH_DRY_RUN`
