@@ -37,7 +37,7 @@ or any way you like:
 
 ### Architecture (pen and paper)
 
-![Architecture](architecture-small.jpg)
+![Architecture](architecture/small.jpg)
 
 ### Available environment variables
 
