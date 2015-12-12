@@ -4,6 +4,8 @@
 
 ![Slack notification](screenshots/slack-notification.png)
 
+![Slack notification](screenshots/git-log.png)
+
 Experiment using Git as a data store to collect users emails for startups 
 during product development when not yet public beta is available. 
 
@@ -115,7 +117,7 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 
 - During development it makes sense to enable `MARKETING_FLUSH_DRY_RUN`
 
-- Start the application with `lein run` or `lein ring server-headless` and `lein repl` to explore the app
+- Start the application with `lein run` or `lein ring server-headless` and `lein repl` to explore the app (remember to export `MARKETING_REPO_URL` environment variable or be sure `~/.marketing` exists, either with existing repo or empty `git init` repo)
 
 - Or using Docker:
 
@@ -127,11 +129,17 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 
 ### Testing
 
-There is a minimum automation testing. 
+There is a bare minimum automation testing. 
 
-! Describe JMeter script settings
-Best way here is to do system testing, by running JMeter script `marketing.jmx` and verify the number of records in the resulting file
-is equal to the total number of concurrent requests done by JMeter.
+Best way here is to do system testing, by running JMeter script `marketing.jmx` and verify the number of records in the resulting file is equal to the total number of concurrent requests done by JMeter (100 threads, 1000 times, so should expect 100 * 1000 = 100 000 entries in the emails.txt file). 
+
+**Note**: it is recommended that you enable `MARKETING_FLUSH_DRY_RUN` environment variable to see the commits only, but not directly pushed into the repo, so the best way to run the application for JMeter testing is the following:
+
+- `export MARKETING_FLUSH_DRY_RUN=1 MARKETING_FLUSH_INTERVAL_MINS=1 MARKETING_FLUSH_THRESHOLD=500 && lein run` (considering you have an empty `git init` `~/.marketing` directory)
+
+### Logging
+
+Logging can be controlled from `resources/simplelogger.properties`.
 
 ### License
 The MIT License (MIT)
