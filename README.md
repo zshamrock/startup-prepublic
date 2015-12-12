@@ -101,7 +101,7 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
 
 3. Modify your docker env by running `eval "$(docker-machine env marketing)"`, it will export `DOCKER_HOST` and `DOCKER_CERT_PATH` among others which make your `docker` and `docker-compose` commands to operate on DigitalOcean image instead of local host
 
-4. Run `export MARKETING_REPO_URL=<your git repository SSH url> && docker-compose -d up`, to build and start container inside DigitalOcean in detached mode (`-d` flag) (`MARKETING_REPO_URL` is the only required parameter for the application to start, so it will fail if it is not provided)
+4. Run `export MARKETING_REPO_URL=<your git repository SSH url> && docker-compose up -d`, to build and start container inside DigitalOcean in detached mode (`-d` flag) (`MARKETING_REPO_URL` is the only required parameter for the application to start, so it will fail if it is not provided)
 
 5. Final step, as the application in order to clone, as well as push into your repository, SSH key must configured, to do so:
 
