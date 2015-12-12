@@ -2,6 +2,8 @@
 
 ### About
 
+![Slack notification](screenshots/slack-notification.jpg)
+
 Experiment using Git as a data store to collect users emails for startups 
 during product development when not yet public beta is available. 
 
@@ -35,7 +37,7 @@ or any way you like:
 
 ### Architecture (pen and paper)
 
-![Architecture](architecture.jpg)
+![Architecture](architecture-small.jpg)
 
 ### Available environment variables
 
@@ -122,6 +124,14 @@ Here below the instruction how to deploy into DigitalOcean with help of `docker-
     - `docker run -it --name prepublic -p 3000:3000 -v $(pwd):/app --env MARKETING_REPO_URL=<your git repository SSH url> akazlou/startup-prepublic` (additionally can provide `MARKETING_FLUSH_DRY_RUN=1` as well)
 
     - and then you can reuse the same container with `docker stop/start prepublic`
+
+### Testing
+
+There is a minimum automation testing. 
+
+! Describe JMeter script settings
+Best way here is to do system testing, by running JMeter script `marketing.jmx` and verify the number of records in the resulting file
+is equal to the total number of concurrent requests done by JMeter.
 
 ### License
 The MIT License (MIT)
