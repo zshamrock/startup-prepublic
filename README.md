@@ -17,6 +17,8 @@ A few advantages or key features:
 
 - Use Github or Bitbucket as the data storage, so no need to take care of data replication and data loss yourself
 
+Read more about [Small experiment with Git as a data storage](http://akazlou.com/posts/2015-12-12-small-experiment-git-ds.html).
+
 ### How to use
 
 - Provide static HTML page inside `resources/web` (by default HTML5 Boilerplate is there)
